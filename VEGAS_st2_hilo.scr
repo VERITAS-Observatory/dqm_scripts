@@ -1,0 +1,37 @@
+#!/bin/bash
+#$1 provide the first hilo run number
+#$2 the second run number
+#$3 regular flasher run number
+#$4 high gain charge integration window (samples)
+#$5 low gain charge integration window (samples)
+# Everything is setup for reedbuck only
+
+run_date=$(mysql VERITAS -h romulus.ucsc.edu  -u readonly <<<"SELECT db_start_time FROM tblRun_Info where run_id=$1;");
+read dbname rundate runtime <<<$(IFS=" "; echo $run_date)
+read -ra rundate <<< $(echo "$rundate" |sed 's/-//g')
+
+#run_date3=$(mysql VERITAS -h romulus.ucsc.edu  -u readonly <<<"SELECT db_start_time FROM tblRun_Info where run_id=$3;");
+#read dbname rundate3 runtime <<<$(IFS=" "; echo $run_date3)
+#read -ra rundate3 <<< $(echo "$rundate3" |sed 's/-//g')
+
+#echo Stage 1 run $1
+#/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage1 -LGDL_LoGainRatioPostUpgrade=1.0 -LGDL_LoGainRatioPreUpgrade=1.0  -LGDL_LoGainRatio=1.0  -Stage1_RunMode=data /raid/reedbuck/veritas/data/d$rundate/$1.cvbf $1st1_hilo.root >$1st1_hilo.log 2>&1 
+
+
+#echo Stage 1 run $2
+#/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage1 -LGDL_LoGainRatioPostUpgrade=1.0 -LGDL_LoGainRatioPreUpgrade=1.0  -LGDL_LoGainRatio=1.0  -Stage1_RunMode=data /raid/reedbuck/veritas/data/d$rundate/$2.cvbf $2st1_hilo.root >$2st1_hilo.log  2>&1 
+
+#echo Stage 1 flasher run $3
+#/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage1 -Stage1_RunMode=flasher /raid/reedbuck/veritas/data/d$rundate3/$3.cvbf $3st1_flasher.root >$3st1_flasher.log  2>&1 
+
+
+cp $1st1_hilo.root $1st2_hilo_highWindow$4lowWindow$5.root
+cp $2st1_hilo.root $2st2_hilo_highWindow$4lowWindow$5.root
+
+/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage2 -TW_HighGainWindowWidth=$4 -TW_LowGainWindowWidth=$5 -LGDL_LoGainRatioPostUpgrade=1.0 -LGDL_LoGainRatioPreUpgrade=1.0   -LGDL_LoGainRatio=1.0  -G_NumEventsToAnalyse=12000  -Stage2_WriteCalibratedEvents=true /raid/reedbuck/veritas/data/d$rundate/$1.cvbf  $1st2_hilo_highWindow$4lowWindow$5.root $3st1_flasher.root >$1st2_hilo_highWindow$4lowWindow$5.log  2>&1 
+
+/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage2  -LGDL_LoGainRatioPostUpgrade=1.0 -LGDL_LoGainRatioPreUpgrade=1.0 -TW_HighGainWindowWidth=$4 -TW_LowGainWindowWidth=$5  -LGDL_LoGainRatio=1.0  -G_NumEventsToAnalyse=12000  -Stage2_WriteCalibratedEvents=true /raid/reedbuck/veritas/data/d$rundate/$2.cvbf  $2st2_hilo_highWindow$4lowWindow$5.root $3st1_flasher.root >$2st2_hilo_highWindow$4lowWindow$5.log  2>&1 
+
+echo "END!"
+
+

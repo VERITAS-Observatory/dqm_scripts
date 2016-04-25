@@ -1,0 +1,12 @@
+#!/bin/bash
+#$1 provide run number
+# Everything is setup for reedbuck only
+
+run_date=$(mysql VERITAS -h romulus.ucsc.edu  -u readonly <<<"SELECT db_start_time FROM tblRun_Info where run_id=$1;");
+read dbname rundate runtime <<<$(IFS=" "; echo $run_date)
+read -ra rundate <<< $(echo "$rundate" |sed 's/-//g')
+
+echo Stage 1 flasher
+/raid/biggams/qfeng/veritas/vegas-v2_5_4/bin/vaStage1 -Stage1_RunMode=flasher /raid/reedbuck/veritas/data/d$rundate/$1.cvbf $1st1_flasher.root >$1st1_flasher.log 
+
+
