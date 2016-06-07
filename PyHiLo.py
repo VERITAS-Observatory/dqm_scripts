@@ -71,24 +71,41 @@ class PyHiLo:
         calibTree.SetBranchAddress("C", calibEvtData)
         
         #fArrayEventNum
-        evtNum = []
+        #evtNum = []
+        evtNums = np.zeros(totalEvtNum)
+
         totalEvtNum = calibTree.GetEntries()
         self.numberOfEvents = totalEvtNum
 
         self.allCharge = np.zeros((4, 499, totalEvtNum))
         self.hiLo = np.zeros((4, 499, totalEvtNum))
-        
-        for ent in range(totalEvtNum):
-            calibTree.GetEntry(ent)
-            evtNum.append(int(calibEvtData.fArrayEventNum))
-            for telID in range(4):
-                try:
-                    for chanID in range(499):
-                        self.allCharge[telID][chanID][ent] = calibEvtData.fTelEvents.at(telID).fChanData.at(chanID).fCharge
-                        self.hiLo[telID][chanID][ent] = calibEvtData.fTelEvents.at(telID).fChanData.at(chanID).fHiLo
-                except:
-                    #print "tel ", telID, "chan ",chanID, " event ", ent, " failed to get charge "
-                    self.allCharge[telID][chanID][ent]=0.
+
+        evt_count = 0
+
+        for evt in range(totalEvtNum):
+            try:
+                calibTree.GetEntry(evt)
+            except:
+                print("Can't get calibrated event number %d" % evt)
+                raise
+            #evtNum.append(int(calibEvtData.fArrayEventNum))
+            try:
+                for telID in range(4):
+                    fChanData = calibEvtData.fTelEvents.at(telID).fChanData
+                    fChanData_iter = ( fChanData.at(i) for i in range(fChanData.size()) )
+                    # Save Charge to numpy array
+                    for CD in fChanData_iter :
+                        chanID = CD.fChanID
+                        charge = CD.fCharge
+                        self.allCharge[telID][chanID][ent] = CD.fCharge
+                        self.hiLo[telID][chanID][ent] = CD.fHiLo
+                evtNums[evt_count] = calibEvtData.fArrayEventNum
+                evt_count += 1
+            except:
+                if verbose :
+                  print('Something wrong with event: {}'.format(evt))
+                  pass
+
         if outfile !=None:
             pd.DataFrame(self.allCharge).to_csv(outfile, index=False, header=None)
         else:
@@ -166,7 +183,9 @@ class PyHiLo:
         ax.hist(self.meanOfMedian[telID, self.unhandledFlasherLevelsEvents[telID]], bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.5)
         plt.show()
 
-    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5, fitLoRange=[4, 5, 6, 7], fitHiRange=[1,2,3], filebase=None, fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100):
+    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
+                            fitLoRange=[4, 5, 6, 7], fitHiRange=[1,2,3], filebase=None, fitProfile=True,
+                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
             self.calcMeanOfMedianHiLo()
@@ -290,7 +309,7 @@ class PyHiLo:
                 ax.set_xlim(xlim)
             plt.legend(loc='best', prop={'size':11})
             if filebase is not None:
-                plt.savefig(filebase+"tel"+str(telID+1)+"chan"+str(chanID)+".eps", fmt='eps')
+                plt.savefig(filebase+"tel"+str(telID+1)+"chan"+str(chanID)+'.'+fmt, fmt=fmt)
         #return ax, self.hilo_ratio[telID, chanID]
 
     def dumpHiLoRatio(self, filebase='HiLo'):
