@@ -72,10 +72,9 @@ class PyHiLo:
         
         #fArrayEventNum
         #evtNum = []
-        evtNums = np.zeros(totalEvtNum)
-
         totalEvtNum = calibTree.GetEntries()
         self.numberOfEvents = totalEvtNum
+        evtNums = np.zeros(totalEvtNum)
 
         self.allCharge = np.zeros((4, 499, totalEvtNum))
         self.hiLo = np.zeros((4, 499, totalEvtNum))
