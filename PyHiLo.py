@@ -184,7 +184,7 @@ class PyHiLo:
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
                             fitLoRange=[4, 5, 6, 7], fitHiRange=[1,2,3], filebase=None, fitProfile=True,
-                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100):
+                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
             self.calcMeanOfMedianHiLo()
@@ -310,6 +310,40 @@ class PyHiLo:
             if filebase is not None:
                 plt.savefig(filebase+"tel"+str(telID+1)+"chan"+str(chanID)+'.'+fmt, fmt=fmt)
         #return ax, self.hilo_ratio[telID, chanID]
+        if debug:
+            print("Now debugging charges for tel %d channel %d..." % (telID, chanID))
+            print("First low gain")
+            for level_j_ in fitLoRange_:
+                print("Low gain flasher level %d" % level_j_)
+                lowGainFitRange_j=np.where((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == level_j_ ))
+                fig, ax = plt.subplots(1)
+                print("Mean monitor charge: %.2f" % np.mean(self.meanOfMedian[telID,:][lowGainFitRange_j]))
+                nMon,binsMon,patchesMon=ax.hist(self.meanOfMedian[telID,:][lowGainFitRange_j],40,normed=1,
+                                                facecolor='b',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Monitor")
+                stdMon = np.std(self.meanOfMedian[telID,:][lowGainFitRange_j])
+                meanMon = np.mean(self.meanOfMedian[telID,:][lowGainFitRange_j])
+                fitMonRange = np.where(abs(self.meanOfMedian[telID,:][lowGainFitRange_j]-meanMon)<=stdMon)
+                fitMon = self.meanOfMedian[telID,fitMonRange][lowGainFitRange_j]
+                (muMon,sigmaMon) = norm.fit(fitMon)
+                yMon = norm.pdf(binsMon,loc=muMon,scale=sigmaMon)
+                ax.flatten()[telID].plot(binsMon,yMon,'r--',linewidth=2, label="Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
+                ax.flatten()[telID].set_ylabel("Normalized counts")
+                plt.show()
+
+                print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][:][lowGainFitRange_j]))
+                n,bins,patches=ax.hist(self.allCharge[telID][chanID][:][lowGainFitRange_j],40,normed=1,
+                                       facecolor='g',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Chan Charge")
+                std = np.std(self.allCharge[telID][chanID][:][lowGainFitRange_j])
+                mean = np.mean(self.allCharge[telID][chanID][:][lowGainFitRange_j])
+                fitRange = np.where(abs(self.allCharge[telID][chanID][:][lowGainFitRange_j]-mean)<=std)
+                fitC = self.allCharge[telID][chanID][fitRange][lowGainFitRange_j]
+                (mu,sigma) = norm.fit(fitC)
+                y = norm.pdf(bins,loc=mu,scale=sigma)
+                ax.flatten()[telID].plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
+                ax.flatten()[telID].set_ylabel("Normalized counts")
+                plt.show()
+                raw_input("Press enter to continue...")
+
 
     def dumpHiLoRatio(self, filebase='HiLo'):
         for tel in [0,1,2,3]:
@@ -323,9 +357,9 @@ class PyHiLo:
             ratios = self.hilo_ratio[telID, self.testChanStart: self.testChanEnd+1]
             ratios = ratios[np.where(ratios>3.)]
             ratios = ratios[np.where(ratios<8.)]
-            (mu,sigma) = norm.fit(ratios)
             n,bins,patches=ax.flatten()[telID].hist(ratios,40,normed=fit_norm,facecolor='b',align='mid', label="T"+str(telID+1))
             if fit_norm:
+                (mu,sigma) = norm.fit(ratios)
                 y = norm.pdf(bins,loc=mu,scale=sigma)
                 #ax.hist(ratios, bins=50, normed=1)
                 ax.flatten()[telID].plot(bins,y,'r--',linewidth=2, label="mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
