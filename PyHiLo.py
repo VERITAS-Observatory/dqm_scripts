@@ -184,7 +184,7 @@ class PyHiLo:
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
                             fitLoRange=[4, 5, 6, 7], fitHiRange=[1,2,3], filebase=None, fitProfile=True,
-                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False):
+                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
             self.calcMeanOfMedianHiLo()
@@ -330,6 +330,8 @@ class PyHiLo:
                 ax.plot(binsMon,yMon,'r--',linewidth=2, label="Fit Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
                 ax.set_ylabel("Normalized counts")
                 plt.legend(loc='best')
+                if save_debug is not None:
+                    plt.savefig("lowGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"MonCharge.png")
                 plt.show()
 
                 print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][lowGainFitRange_j]))
@@ -346,9 +348,51 @@ class PyHiLo:
                 ax.plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
                 ax.set_ylabel("Normalized counts")
                 plt.legend(loc='best')
+                if save_debug is not None:
+                    plt.savefig("lowGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"ChanCharge.png")
                 plt.show()
 
-                raw_input("Press enter to continue...")
+            print("Then high gain")
+            for level_j_ in fitHiRange_:
+                print("High gain flasher level %d" % level_j_)
+                hiGainFitRange_j=np.where((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == level_j_ ))
+                fig, ax = plt.subplots(1)
+                print("Mean monitor charge: %.2f" % np.mean(self.meanOfMedian[telID,:][hiGainFitRange_j]))
+                mon_j = self.meanOfMedian[telID][hiGainFitRange_j]
+                stdMon = np.std(mon_j)
+                meanMon = np.mean(mon_j)
+                nMon,binsMon,patchesMon=ax.hist(mon_j,40,normed=1,
+                                                facecolor='b',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Monitor \nmean="+str("%.2f" % meanMon)+"\nsigma="+str("%.2f" % stdMon))
+                fitMonRange = np.where(abs(mon_j-meanMon)<=stdMon)
+                fitMon = mon_j[fitMonRange]
+                (muMon,sigmaMon) = norm.fit(fitMon)
+                yMon = norm.pdf(binsMon,loc=muMon,scale=sigmaMon)
+                ax.plot(binsMon,yMon,'r--',linewidth=2, label="Fit Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
+                ax.set_ylabel("Normalized counts")
+                plt.legend(loc='best')
+                if save_debug is not None:
+                    plt.savefig("highGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"MonCharge.png")
+                plt.show()
+
+                print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][hiGainFitRange_j]))
+                fig, ax = plt.subplots(1)
+                allC_j = self.allCharge[telID][chanID][hiGainFitRange_j]
+                std = np.std(allC_j)
+                mean = np.mean(allC_j)
+                fitRange = np.where(abs(allC_j-mean)<=std)
+                fitC = allC_j[fitRange]
+                n,bins,patches=ax.hist(allC_j,40,normed=1,
+                                       facecolor='g',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Chan Charge \nmean="+str("%.2f" % mean)+"\nsigma="+str("%.2f" %std))
+                (mu,sigma) = norm.fit(fitC)
+                y = norm.pdf(bins,loc=mu,scale=sigma)
+                ax.plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
+                ax.set_ylabel("Normalized counts")
+                plt.legend(loc='best')
+                if save_debug is not None:
+                    plt.savefig("highGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"ChanCharge.png")
+                plt.show()
+
+            #raw_input("Press enter to continue...")
 
 
     def dumpHiLoRatio(self, filebase='HiLo'):
