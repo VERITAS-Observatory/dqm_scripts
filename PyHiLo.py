@@ -318,30 +318,36 @@ class PyHiLo:
                 lowGainFitRange_j=np.where((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == level_j_ ))
                 fig, ax = plt.subplots(1)
                 print("Mean monitor charge: %.2f" % np.mean(self.meanOfMedian[telID,:][lowGainFitRange_j]))
-                nMon,binsMon,patchesMon=ax.hist(self.meanOfMedian[telID,:][lowGainFitRange_j],40,normed=1,
-                                                facecolor='b',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Monitor")
-                stdMon = np.std(self.meanOfMedian[telID,:][lowGainFitRange_j])
-                meanMon = np.mean(self.meanOfMedian[telID,:][lowGainFitRange_j])
-                fitMonRange = np.where(abs(self.meanOfMedian[telID,:][lowGainFitRange_j]-meanMon)<=stdMon)
-                fitMon = self.meanOfMedian[telID,fitMonRange][lowGainFitRange_j]
+                mon_j = self.meanOfMedian[telID][lowGainFitRange_j]
+                stdMon = np.std(mon_j)
+                meanMon = np.mean(mon_j)
+                nMon,binsMon,patchesMon=ax.hist(mon_j,40,normed=1,
+                                                facecolor='b',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Monitor \nmean="+str("%.2f" % meanMon)+"\nsigma="+str("%.2f" % stdMon))
+                fitMonRange = np.where(abs(mon_j-meanMon)<=stdMon)
+                fitMon = mon_j[fitMonRange]
                 (muMon,sigmaMon) = norm.fit(fitMon)
                 yMon = norm.pdf(binsMon,loc=muMon,scale=sigmaMon)
-                ax.flatten()[telID].plot(binsMon,yMon,'r--',linewidth=2, label="Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
-                ax.flatten()[telID].set_ylabel("Normalized counts")
+                ax.plot(binsMon,yMon,'r--',linewidth=2, label="Fit Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
+                ax.set_ylabel("Normalized counts")
+                plt.legend()
                 plt.show()
 
-                print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][:][lowGainFitRange_j]))
-                n,bins,patches=ax.hist(self.allCharge[telID][chanID][:][lowGainFitRange_j],40,normed=1,
-                                       facecolor='g',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Chan Charge")
-                std = np.std(self.allCharge[telID][chanID][:][lowGainFitRange_j])
-                mean = np.mean(self.allCharge[telID][chanID][:][lowGainFitRange_j])
-                fitRange = np.where(abs(self.allCharge[telID][chanID][:][lowGainFitRange_j]-mean)<=std)
-                fitC = self.allCharge[telID][chanID][fitRange][lowGainFitRange_j]
+                print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][lowGainFitRange_j]))
+                fig, ax = plt.subplots(1)
+                allC_j = self.allCharge[telID][chanID][lowGainFitRange_j]
+                std = np.std(allC_j)
+                mean = np.mean(allC_j)
+                fitRange = np.where(abs(allC_j-mean)<=std)
+                fitC = allC_j[fitRange]
+                n,bins,patches=ax.hist(allC_j,40,normed=1,
+                                       facecolor='g',align='mid', label="T"+str(telID+1)+" chan"+str(chanID)+" Chan Charge \nmean="+str("%.2f" % mean)+"\nsigma="+str("%.2f" %std))
                 (mu,sigma) = norm.fit(fitC)
                 y = norm.pdf(bins,loc=mu,scale=sigma)
-                ax.flatten()[telID].plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
-                ax.flatten()[telID].set_ylabel("Normalized counts")
+                ax.plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
+                ax.set_ylabel("Normalized counts")
+                plt.legend()
                 plt.show()
+
                 raw_input("Press enter to continue...")
 
 
