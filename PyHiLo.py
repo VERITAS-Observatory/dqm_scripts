@@ -329,7 +329,7 @@ class PyHiLo:
                 yMon = norm.pdf(binsMon,loc=muMon,scale=sigmaMon)
                 ax.plot(binsMon,yMon,'r--',linewidth=2, label="Fit Monitor mean="+str("%.2f" % muMon)+"\nsigma="+str("%.2f" % sigmaMon))
                 ax.set_ylabel("Normalized counts")
-                plt.legend()
+                plt.legend(loc='best')
                 plt.show()
 
                 print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][lowGainFitRange_j]))
@@ -345,7 +345,7 @@ class PyHiLo:
                 y = norm.pdf(bins,loc=mu,scale=sigma)
                 ax.plot(bins,y,'r--',linewidth=2, label="Channel mean="+str("%.2f" % mu)+"\nsigma="+str("%.2f" % sigma))
                 ax.set_ylabel("Normalized counts")
-                plt.legend()
+                plt.legend(loc='best')
                 plt.show()
 
                 raw_input("Press enter to continue...")
