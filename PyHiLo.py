@@ -611,6 +611,7 @@ class PyHiLo:
                             elif SNR < cleaning['img']:
                                 brd_candidate_index = np.append(brd_candidate_index,chanID)
                         if cleaning is not None:
+                            print("Cleaning the images...")
                             for chanID in brd_candidate_index:
                                 passed  = False
                                 for neighbor in neighbor_dict[chanID]:
