@@ -609,7 +609,7 @@ class PyHiLo:
                         snrStorage[chanID] = SNR
                         if cleaning is not None:
                             if SNR < cleaning['brd']:
-                                allCharge[telID][chanID][evt_count] = 0
+                                self.allCharge[telID][chanID][evt_count] = 0
                             elif SNR < cleaning['img']:
                                 brd_candidate_index = np.append(brd_candidate_index,chanID)
                         if cleaning is not None:
@@ -621,12 +621,12 @@ class PyHiLo:
                                         passed = True
                                         break
                                 if not passed:
-                                    allCharge[telID][chanID][evt_count] = 0
+                                    self.allCharge[telID][chanID][evt_count] = 0
                         # Average over neighboring pixels for L2-masked pixels
                         if maskL2:
                             for l2chan in l2channels[telID]:
                                 if (l2chan != 499):
-                                    allCharge[telID][l2chan][evt_count] = np.mean(allCharge[telID,neighbor_dict[l2chan],evt_count])
+                                    self.allCharge[telID][l2chan][evt_count] = np.mean(self.allCharge[telID,neighbor_dict[l2chan],evt_count])
                 evtNums[evt_count] = calibEvtData.fArrayEventNum
                 evt_count += 1
             except:
