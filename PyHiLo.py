@@ -602,8 +602,8 @@ class PyHiLo:
                         chanID = CD.fChanID
                         charge = CD.fCharge
                         SNR    = CD.fSignalToNoise
-                        self.allCharge[telID][chanID][ent] = CD.fCharge
-                        self.hiLo[telID][chanID][ent] = CD.fHiLo
+                        self.allCharge[telID][chanID][evt] = CD.fCharge
+                        self.hiLo[telID][chanID][evt] = CD.fHiLo
                         snrStorage[chanID] = SNR
                         if cleaning is not None:
                             if SNR < cleaning['brd']:
