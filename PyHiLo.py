@@ -81,6 +81,8 @@ class PyHiLo:
 
         if maskL2:
             #hard-coded for speed, all numbers are CHANNEL IDs
+            l2channels=[[110, 249, 255, 404, 475, 499], [128, 173, 259, 498, 499],
+                        [37, 159, 319, 451, 499], [99, 214, 333, 499]]
             neighbor_dict = {0: [1, 2, 3, 4, 5, 6],
                      1: [0, 2, 6, 7, 8, 18],
                      2: [0, 1, 3, 8, 9, 10],
