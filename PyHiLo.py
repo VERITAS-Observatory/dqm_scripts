@@ -61,7 +61,7 @@ class PyHiLo:
                 self.meanLowGainCharge[i][j]=sum(self.allCharge[i,:,j][np.where(self.hiLo[i,:,j]==1)])/sum(self.hiLo[i,:,j])
         return self.meanOfMedian, self.meanLowGainCharge
     
-    def getAllCharge(self, outfile=None, maskL2=True, cleaning={'img':5.0,'brd':2.5}):
+    def getAllCharge(self, outfile=None, maskL2=True, cleaning={'img':5.0,'brd':2.5}, verbose=True):
         rootFile = ROOT.VARootIO(self.filename,1)
         calibTree = rootFile.loadTheCalibratedEventTree()
         
