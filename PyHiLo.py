@@ -586,16 +586,14 @@ class PyHiLo:
                      498: [459, 460, 497]}
 
         if pedestal_subtraction:
-            peds = np.zeros(4, 499)
+            peds = np.zeros((4, 499))
             for telID in range(4):
                 for chanID in range(499):
                     try:
                         peds[telID, chanID] = QStatsData.getQBasePerSample(telID, chanID)*self.sample
                     except:
                         print("Can't get pedestal for tel %d chan %d" % (telID+1, chanID))
-
         evt_count = 0
-
         for evt in range(totalEvtNum):
             try:
                 calibTree.GetEntry(evt)
