@@ -61,7 +61,9 @@ class PyHiLo:
                 self.meanLowGainCharge[i][j]=sum(self.allCharge[i,:,j][np.where(self.hiLo[i,:,j]==1)])/sum(self.hiLo[i,:,j])
         return self.meanOfMedian, self.meanLowGainCharge
     
-    def getAllCharge(self, outfile=None, maskL2=True, cleaning={'img':5.0,'brd':2.5}, verbose=True):
+    def getAllCharge(self, outfile=None, maskL2=True, cleaning=None, pedestal_subtraction=True, verbose=True):
+        #don't clean
+        #cleaning={'img':5.0,'brd':2.5}
         rootFile = ROOT.VARootIO(self.filename,1)
         calibTree = rootFile.loadTheCalibratedEventTree()
         
@@ -583,6 +585,15 @@ class PyHiLo:
                      497: [458, 459, 496, 498],
                      498: [459, 460, 497]}
 
+        if pedestal_subtraction:
+            peds = np.zeros(4, 499)
+            for telID in range(4):
+                for chanID in range(499):
+                    try:
+                        peds[telID, chanID] = QStatsData.getQBasePerSample(telID, chanID)*self.sample
+                    except:
+                        print("Can't get pedestal for tel %d chan %d" % (telID+1, chanID))
+
         evt_count = 0
 
         for evt in range(totalEvtNum):
@@ -613,7 +624,7 @@ class PyHiLo:
                             elif SNR < cleaning['img']:
                                 brd_candidate_index = np.append(brd_candidate_index,chanID)
                         if cleaning is not None:
-                            print("Cleaning the images...")
+                            #print("Cleaning the images...")
                             for chanID in brd_candidate_index:
                                 passed  = False
                                 for neighbor in neighbor_dict[chanID]:
@@ -622,6 +633,9 @@ class PyHiLo:
                                         break
                                 if not passed:
                                     self.allCharge[telID][chanID][evt_count] = 0
+
+                        if pedestal_subtraction:
+                            self.allCharge[telID][chanID][evt_count] = self.allCharge[telID][chanID][evt_count]-peds[telID, chanID]
                         # Average over neighboring pixels for L2-masked pixels
                         if maskL2:
                             for l2chan in l2channels[telID]:
@@ -994,7 +1008,9 @@ def load_pickle(filename):
     f_in.close()
     return hilo
 
-def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True, plotTrace=True, overwrite=False):
+def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
+                   numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True,
+                   plotTrace=True, overwrite=False):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo = load_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
