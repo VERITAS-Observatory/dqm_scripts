@@ -587,6 +587,7 @@ class PyHiLo:
 
         if pedestal_subtraction:
             peds = np.zeros((4, 499))
+            QStatsData = rootFile.loadTheQStatsData()
             for telID in range(4):
                 for chanID in range(499):
                     try:
@@ -611,9 +612,9 @@ class PyHiLo:
                     # Save Charge to numpy array
                     for CD in fChanData_iter :
                         chanID = CD.fChanID
-                        charge = CD.fCharge
+                        #charge = CD.fCharge
                         SNR    = CD.fSignalToNoise
-                        self.allCharge[telID][chanID][evt] = CD.fCharge
+                        self.allCharge[telID][chanID][evt_count] = CD.fCharge
                         self.hiLo[telID][chanID][evt] = CD.fHiLo
                         snrStorage[chanID] = SNR
                         if cleaning is not None:
