@@ -652,7 +652,7 @@ class PyHiLo:
         else:
             return self.allCharge, self.hiLo
 
-    def getFlasherLevels(self):
+    def getFlasherLevels(self, number_of_LEDs=7):
         self.flasherLevels = np.zeros((4, self.numberOfEvents))
         self.unhandledFlasherLevelsEvents= [[] for i in range(4)]
         #use T4 monitor charge as criteria
@@ -663,9 +663,9 @@ class PyHiLo:
                 #figure out flasher level for the first few events
                     for j in range(neg_jump, -1, -1):
                         if j>0 and self.meanOfMedian[tel, j] > self.meanOfMedian[tel, j-1]:
-                            self.flasherLevels[tel, j]=j+7-neg_jump
+                            self.flasherLevels[tel, j]=j+number_of_LEDs-neg_jump
                         elif j==0:
-                            self.flasherLevels[tel, j]=j+7-neg_jump
+                            self.flasherLevels[tel, j]=j+number_of_LEDs-neg_jump
                         else:
                             print "This will never happen."
                     continue
@@ -675,20 +675,20 @@ class PyHiLo:
                     for j in range(neg_jump+1, self.numberOfEvents):
                         self.flasherLevels[tel, j]=j-neg_jump-1
                     break
-                if neg_jumps[i+1]-neg_jump == 8:
-                    #dealing with a regular 7+1 cycle
+                if neg_jumps[i+1]-neg_jump == number_of_LEDs+1:
+                    #dealing with a regular number_of_LEDs+1 cycle
                     for j in range(neg_jump+1, neg_jumps[i+1]+1):
                         self.flasherLevels[tel, j]=j-neg_jump-1
                 else:
-                    #dealing with an unusual cycle of < 7+1 levels, 
+                    #dealing with an unusual cycle of < number_of_LEDs+1 levels,
                     #maybe a pedestal event
-                    if self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump] == 7:
-                        #flasher level before jump was 7, 
+                    if self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump] == number_of_LEDs:
+                        #flasher level before jump was number_of_LEDs,
                         # so should start at 0 and 1 again
                         for j in range(neg_jump+1, neg_jumps[i+1]+1):
                             self.flasherLevels[tel, j]=j-neg_jump-1
-                    elif self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump]<7 and self.meanOfMedian[tel, neg_jump+2] > self.meanOfMedian[tel, neg_jump]:
-                        #last cycle finished at flasher level <7, and the first in next cycle has larger charge then the last one, accumulate from the last one
+                    elif self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump]<number_of_LEDs and self.meanOfMedian[tel, neg_jump+2] > self.meanOfMedian[tel, neg_jump]:
+                        #last cycle finished at flasher level <number_of_LEDs, and the first in next cycle has larger charge then the last one, accumulate from the last one
                         self.flasherLevels[tel, neg_jump+1]=0
                         for j in range(neg_jump+2, neg_jumps[i+1]+1):
                             self.flasherLevels[tel, j]=j-neg_jump-1+self.flasherLevels[tel, neg_jump]
@@ -716,10 +716,10 @@ class PyHiLo:
                 self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, fitProfile=fitProfile, plot=plot, filebase=filebase, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo)
                 #self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, filebase=filebase, plot=True)
 
-    def plotFlasherLevelsHist(self, telID):
+    def plotFlasherLevelsHist(self, telID, number_of_LEDs=7):
         fig, ax = plt.subplots(1)
         colors=['r', 'b', 'g', 'm', 'c', 'brown', 'y', 'orange']
-        for i in range(8):
+        for i in range(number_of_LEDs+1):
             ax.hist(self.meanOfMedian[telID,:][np.where(self.flasherLevels[telID, :]==i)], bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color=colors[i], alpha=0.3)
         ax.hist(self.meanOfMedian[telID, self.unhandledFlasherLevelsEvents[telID]], bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.5)
         plt.show()
@@ -1009,14 +1009,14 @@ def load_pickle(filename):
 
 def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
                    numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True,
-                   plotTrace=True, overwrite=False):
+                   plotTrace=True, overwrite=False, number_of_LEDs=7):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo = load_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
         return hilo
     hilo = PyHiLo(filename, innerHiGain, sample=number_of_samples)
     hilo.calcMeanOfMedianHiLo()
-    hilo.getFlasherLevels()
+    hilo.getFlasherLevels(number_of_LEDs=number_of_LEDs)
     if plotTrace:
         plotAverageTraces(filename, fileout=str(runnumber)+"_"+str(number_of_samples)+"AverageTraces.png")
     if not os.path.isdir(filedir+"/plots_"+str(number_of_samples)+"samples"):
@@ -1031,12 +1031,19 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
         hilo.dump_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
     return hilo
 
-def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples, innerHiGain1=False, innerHiGain2=True, fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, plotTrace=True, fit_norm=True, xlo=4.5, xhi=7.5):
+def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
+                        innerHiGain1=False, innerHiGain2=True, fitProfile=True,
+                        numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, plotTrace=True,
+                        fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=7):
     print "Processing run "+str(runnumber1)+"..."
     filedir = "hilo"+str(date)
-    hilo1 = processHiLoRun(filename1, runnumber1, date, number_of_samples, innerHiGain=innerHiGain1, fitProfile=fitProfile, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, plotTrace=plotTrace, overwrite=True)
+    hilo1 = processHiLoRun(filename1, runnumber1, date, number_of_samples, innerHiGain=innerHiGain1, fitProfile=fitProfile,
+                           numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
+                           plot=plot, plotTrace=plotTrace, overwrite=True, number_of_LEDs=number_of_LEDs)
     print "Processing run "+str(runnumber2)+"..."
-    hilo2 = processHiLoRun(filename2, runnumber2, date, number_of_samples, innerHiGain=innerHiGain2, fitProfile=fitProfile, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, plotTrace=plotTrace, overwrite=True)
+    hilo2 = processHiLoRun(filename2, runnumber2, date, number_of_samples, innerHiGain=innerHiGain2, fitProfile=fitProfile,
+                           numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
+                           plot=plot, plotTrace=plotTrace, overwrite=True, number_of_LEDs=number_of_LEDs)
     plotBothHilos(hilo1, hilo2, filebase=str(runnumber1)+'_'+str(runnumber2)+'_'+str(number_of_samples)+"samples", fit_norm=fit_norm, xlo=xlo, xhi=xhi)
     getMultipliers(hilo1, filebase="hilo_multipliers/"+str(date)+"_"+str(runnumber1)+"_"+str(number_of_samples)+"sample", fit_norm=fit_norm, date=date, runnumber=runnumber1, sample=number_of_samples)
     getMultipliers(hilo2, filebase="hilo_multipliers/"+str(date)+"_"+str(runnumber2)+"_"+str(number_of_samples)+"sample", fit_norm=fit_norm, date=date, runnumber=runnumber2, sample=number_of_samples)
@@ -1231,6 +1238,7 @@ if __name__=="__main__":
     parser.add_option("--run2",dest="r2", default=None)
     parser.add_option("-d","--date",dest="date", default=None)
     parser.add_option("-w","--window",dest="window",default="both")
+    parser.add_option("-f","--flasher-levels",dest="flasher",default=15)
     #parser.add_option("-inner","--innerHi",dest="innerHi",default=True)
     (options, args) = parser.parse_args()
 
@@ -1240,15 +1248,31 @@ if __name__=="__main__":
         for d in df.date.unique():    
             print d, df.data[df.date==d].values[0], df.data[df.date==d].values[1]
             if options.window == "7" or options.window == "both":
-                hilo_r1_7, hilo_r2_7 = processBothHiLoRuns(str(df.data[df.date==d].values[0])+"st2_hilo_highWindow7lowWindow7.root", str(df.data[df.date==d].values[1])+"st2_hilo_highWindow7lowWindow7.root", df.data[df.date==d].values[0], df.data[df.date==d].values[1], "hilo"+str(d), 7, innerHiGain1=False, innerHiGain2=True)
+                hilo_r1_7, hilo_r2_7 = processBothHiLoRuns(str(df.data[df.date==d].values[0])+"st2_hilo_highWindow7lowWindow7.root",
+                                                           str(df.data[df.date==d].values[1])+"st2_hilo_highWindow7lowWindow7.root",
+                                                           df.data[df.date==d].values[0], df.data[df.date==d].values[1],
+                                                           "hilo"+str(d), 7, innerHiGain1=False, innerHiGain2=True,
+                                                           number_of_LEDs=options.flasher)
             if options.window == "16" or options.window == "both":
-                hilo_r1_16, hilo_r2_16 = processBothHiLoRuns(str(df.data[df.date==d].values[0])+"st2_hilo_highWindow16lowWindow16.root", str(df.data[df.date==d].values[1])+"st2_hilo_highWindow16lowWindow16.root", df.data[df.date==d].values[0],df.data[df.date==d].values[1], "hilo"+str(d), 16, innerHiGain1=False, innerHiGain2=True)
+                hilo_r1_16, hilo_r2_16 = processBothHiLoRuns(str(df.data[df.date==d].values[0])+"st2_hilo_highWindow16lowWindow16.root",
+                                                             str(df.data[df.date==d].values[1])+"st2_hilo_highWindow16lowWindow16.root",
+                                                             df.data[df.date==d].values[0],df.data[df.date==d].values[1],
+                                                             "hilo"+str(d), 16, innerHiGain1=False, innerHiGain2=True,
+                                                             number_of_LEDs=options.flasher)
     else:
         try:
             if options.window == "7" or options.window == "both":
-                hilo_r1_7, hilo_r2_7 = processBothHiLoRuns(str(options.r1)+"st2_hilo_highWindow7lowWindow7.root", str(options.r2)+"st2_hilo_highWindow7lowWindow7.root", options.r1, options.r2, "hilo"+str(options.date), 7, innerHiGain1=False, innerHiGain2=True)
+                hilo_r1_7, hilo_r2_7 = processBothHiLoRuns(str(options.r1)+"st2_hilo_highWindow7lowWindow7.root",
+                                                           str(options.r2)+"st2_hilo_highWindow7lowWindow7.root",
+                                                           options.r1, options.r2, "hilo"+str(options.date), 7,
+                                                           innerHiGain1=False, innerHiGain2=True,
+                                                           number_of_LEDs=options.flasher)
             if options.window == "16" or options.window == "both":
-                hilo_r1_16, hilo_r2_16 = processBothHiLoRuns(str(options.r1)+"st2_hilo_highWindow16lowWindow16.root", str(options.r2)+"st2_hilo_highWindow16lowWindow16.root", options.r1, options.r2, "hilo"+str(options.date), 16, innerHiGain1=False, innerHiGain2=True)
+                hilo_r1_16, hilo_r2_16 = processBothHiLoRuns(str(options.r1)+"st2_hilo_highWindow16lowWindow16.root",
+                                                             str(options.r2)+"st2_hilo_highWindow16lowWindow16.root",
+                                                             options.r1, options.r2, "hilo"+str(options.date), 16,
+                                                             innerHiGain1=False, innerHiGain2=True,
+                                                             number_of_LEDs=options.flasher)
         except:
             print "check your options, -l runlist, or -r1 inner hi gain run, -r2 outer hi gain run, -d date"
             raise RuntimeError
