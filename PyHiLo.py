@@ -585,15 +585,16 @@ class PyHiLo:
                      497: [458, 459, 496, 498],
                      498: [459, 460, 497]}
 
-        if pedestal_subtraction:
-            peds = np.zeros((4, 499))
-            QStatsData = rootFile.loadTheQStatsData()
-            for telID in range(4):
-                for chanID in range(499):
-                    try:
-                        peds[telID, chanID] = QStatsData.getQBasePerSample(telID, chanID)*self.sample
-                    except:
-                        print("Can't get pedestal for tel %d chan %d" % (telID+1, chanID))
+        #if pedestal_subtraction:
+        #seems already done
+        #    peds = np.zeros((4, 499))
+        #    QStatsData = rootFile.loadTheQStatsData()
+        #    for telID in range(4):
+        #        for chanID in range(499):
+        #            try:
+        #                peds[telID, chanID] = QStatsData.getQBasePerSample(telID, chanID)*self.sample
+        #            except:
+        #                print("Can't get pedestal for tel %d chan %d" % (telID+1, chanID))
         evt_count = 0
         for evt in range(totalEvtNum):
             try:
@@ -633,8 +634,9 @@ class PyHiLo:
                                 if not passed:
                                     self.allCharge[telID][chanID][evt_count] = 0
 
-                        if pedestal_subtraction:
-                            self.allCharge[telID][chanID][evt_count] = self.allCharge[telID][chanID][evt_count]-peds[telID, chanID]
+                        #if pedestal_subtraction:
+                        #    #seems already done in VEGAS
+                        #    self.allCharge[telID][chanID][evt_count] = self.allCharge[telID][chanID][evt_count]-peds[telID, chanID]
                         # Average over neighboring pixels for L2-masked pixels
                         if maskL2:
                             for l2chan in l2channels[telID]:
