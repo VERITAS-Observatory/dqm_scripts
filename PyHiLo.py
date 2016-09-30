@@ -718,10 +718,17 @@ class PyHiLo:
 
     def plotFlasherLevelsHist(self, telID, number_of_LEDs=7):
         fig, ax = plt.subplots(1)
-        colors=['r', 'b', 'g', 'm', 'c', 'brown', 'y', 'orange']
+        #if number_of_LEDs==7:
+        #    colors=['r', 'b', 'g', 'm', 'c', 'brown', 'y', 'orange']
+        colors=['r', 'b', 'g', 'm', 'c',
+                'brown', 'y', 'orange', 'pink', 'navy',
+                'gray', 'plum', 'salmon', 'gold', 'teal', 'wheat']
         for i in range(number_of_LEDs+1):
-            ax.hist(self.meanOfMedian[telID,:][np.where(self.flasherLevels[telID, :]==i)], bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color=colors[i], alpha=0.3)
-        ax.hist(self.meanOfMedian[telID, self.unhandledFlasherLevelsEvents[telID]], bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.5)
+            ax.hist(self.meanOfMedian[telID,:][np.where(self.flasherLevels[telID, :]==i)],
+                    bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color=colors[i], alpha=0.3, edgecolor='none')
+        ax.hist(self.meanOfMedian[telID, self.unhandledFlasherLevelsEvents[telID]], bins=200,
+                range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.1, edgecolor='none', label="Unhandled")
+        plt.legend(loc='best')
         plt.show()
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
