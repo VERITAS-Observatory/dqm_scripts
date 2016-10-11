@@ -55,13 +55,14 @@ class PyHiLo:
         for i in range(numTel):
             for j in range(numEvt):
                 for k in range(self.numOfMedians):
-                    self.meanOfMedian[i][j] += np.median(self.allCharge[i,k*(self.MonChanEnd-self.MonChanStart)/self.numOfMedians+self.MonChanStart:(k+1)*(self.MonChanEnd-self.MonChanStart)/self.numOfMedians+self.MonChanStart, j])
+                    self.meanOfMedian[i][j] += np.median(self.allCharge[i,k*(self.MonChanEnd-self.MonChanStart)/(1.0*self.numOfMedians)+self.MonChanStart:(k+1.)*(self.MonChanEnd-self.MonChanStart)/(1.*self.numOfMedians)+self.MonChanStart, j])
                 self.meanOfMedian[i][j] = float(self.meanOfMedian[i][j]/self.numOfMedians)
                 #Get mean low gain charge for tel i event j, 
-                self.meanLowGainCharge[i][j]=sum(self.allCharge[i,:,j][np.where(self.hiLo[i,:,j]==1)])/sum(self.hiLo[i,:,j])
+                self.meanLowGainCharge[i][j]=sum(self.allCharge[i,:,j][np.where(self.hiLo[i,:,j]==1)])/(1.0*sum(self.hiLo[i,:,j]))
+        self.meanLowGainCharge = np.nan_to_num(self.meanLowGainCharge)
         return self.meanOfMedian, self.meanLowGainCharge
     
-    def getAllCharge(self, outfile=None, maskL2=True, cleaning=None, pedestal_subtraction=True, verbose=True):
+    def getAllCharge(self, outfile=None, maskL2=True, cleaning=None, pedestal_subtraction=True, verbose=True, stop_event=None):
         #don't clean
         #cleaning={'img':5.0,'brd':2.5}
         rootFile = ROOT.VARootIO(self.filename,1)
@@ -74,7 +75,10 @@ class PyHiLo:
         
         #fArrayEventNum
         #evtNum = []
-        totalEvtNum = calibTree.GetEntries()
+        if stop_event is not None:
+            totalEvtNum = stop_event
+        else:
+            totalEvtNum = calibTree.GetEntries()
         self.numberOfEvents = totalEvtNum
         evtNums = np.zeros(totalEvtNum)
 
@@ -654,13 +658,18 @@ class PyHiLo:
         else:
             return self.allCharge, self.hiLo
 
-    def getFlasherLevels(self, number_of_LEDs=7):
+    def getFlasherLevels(self, number_of_LEDs=15):
         self.flasherLevels = np.zeros((4, self.numberOfEvents))
         self.unhandledFlasherLevelsEvents= [[] for i in range(4)]
         #use T4 monitor charge as criteria
         for tel in range(4):
             neg_jumps = np.array(np.where(np.diff(self.meanOfMedian[tel,])<0))[0]
+            did_cycle=[]
             for i, neg_jump in enumerate(neg_jumps):
+                if i in did_cycle:
+                    #check if the current cycle is taken care of from the previous one (see below case 1 & 2)
+                    did_cycle.remove(i)
+                    continue
                 if i==0 and neg_jump>0:
                 #figure out flasher level for the first few events
                     for j in range(neg_jump, -1, -1):
@@ -677,23 +686,99 @@ class PyHiLo:
                     for j in range(neg_jump+1, self.numberOfEvents):
                         self.flasherLevels[tel, j]=j-neg_jump-1
                     break
+                #if neg_jumps[i+1]-neg_jump == number_of_LEDs+1 and self.flasherLevels[tel, neg_jump] == number_of_LEDs:
+                #    #dealing with a regular number_of_LEDs+1 cycle, and the previous cycle finished at the highest number of LEDs
                 if neg_jumps[i+1]-neg_jump == number_of_LEDs+1:
                     #dealing with a regular number_of_LEDs+1 cycle
                     for j in range(neg_jump+1, neg_jumps[i+1]+1):
                         self.flasherLevels[tel, j]=j-neg_jump-1
                 else:
-                    #dealing with an unusual cycle of < number_of_LEDs+1 levels,
-                    #maybe a pedestal event
-                    if self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump] == number_of_LEDs:
-                        #flasher level before jump was number_of_LEDs,
-                        # so should start at 0 and 1 again
+                    #dealing with an unusual cycle of < number_of_LEDs+1 levels, or a previous cycle ended abnormally
+                    #usually two possibilities: 1. a pedestal event breaks the flasher cycle into two lengths of: n1, n2
+                    #                              n1+n2=17, so this neg_jump+1 should be 0 as it is a pedestal;
+                    #                              and from neg_jump+2 resume where neg_jump is left off
+                    #                           2. some how two flasher levels are inverted, then n1 + n2 = 16
+                    #                              should combine n1 and n2, but flip neg_jump and neg_jump+1
+                    #                           3: more than 1 pedestal evts break a cycle into more than 2 pieces (x):
+                    #                               process these x pieces together, and register in did_cycle
+                    #                               this is a special case for 1
+                    #                           3. just a cycle that has fewer than the assumed number of LEDs,
+                    # in case 1 and 2 the next cycle should be taken care of at the same time
+                    #       case 1 neg_jumps[i+2]-neg_jump == 17
+                    #                   and self.meanOfMedian[tel, neg_jump+1]<=5
+                    #                   and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10:
+                    #       case 2 neg_jumps[i+2]-neg_jump == 16
+                    #                   and self.meanOfMedian[tel, neg_jump+1]<=5
+                    #                   and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10:
+                    # case 3: more than 1 pedestal evts break a cycle into more than 2 pieces (x):
+                    #             process these x pieces together, and register in did_cycle
+                    #           if neg_jumps[i+2]-neg_jump < 16:
+                    #               for n_sub_cycle in [3,4,5]:
+                    #                   if neg_jumps[i+n_sub_cycle]-neg_jump == 17
+                    #                       and self.meanOfMedian[tel, neg_jump+1]<=5
+                    #                       and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10: #the above isn't complete but ok
+                    # in case 4, just start fresh at next level, and fill this level from 0
+                    #       only fill when self.meanOfMedian[tel, neg_jump+1]<=5
+                    #                       and self.meanOfMedian[tel, neg_jumps[i+1]+1]<=5:
+                    #                       and neg_jumps[i+2]-neg_jump > 17
+                    # case 1:
+                    if i<len(neg_jumps)-2 and neg_jumps[i+2]-neg_jump == 17 and self.meanOfMedian[tel, neg_jump+1]<=5 and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10: #and self.flasherLevels[tel, neg_jump] == number_of_LEDs:
+                        #sub cycle before the pedestal event
                         for j in range(neg_jump+1, neg_jumps[i+1]+1):
                             self.flasherLevels[tel, j]=j-neg_jump-1
-                    elif self.meanOfMedian[tel, neg_jump+1]<=5 and self.flasherLevels[tel, neg_jump]<number_of_LEDs and self.meanOfMedian[tel, neg_jump+2] > self.meanOfMedian[tel, neg_jump]:
+                        #this is the pedestal event
+                        self.flasherLevels[tel, neg_jumps[i+1]+1] = 0
+                        #sub cycle after
+                        count_sub_=1
+                        for k in range(neg_jumps[i+1]+2, neg_jumps[i+2]+1):
+                            self.flasherLevels[tel, k]=count_sub_+self.flasherLevels[tel, neg_jumps[i+1]]
+                            count_sub_ += 1
+                        did_cycle.append(i+1)
+                    #case 2:
+                    elif i<len(neg_jumps)-2 and neg_jumps[i+2]-neg_jump == 16 and self.meanOfMedian[tel, neg_jump+1]<=5 and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10: #and self.flasherLevels[tel, neg_jump]<number_of_LEDs and self.meanOfMedian[tel, neg_jump+2] > self.meanOfMedian[tel, neg_jump]:
                         #last cycle finished at flasher level <number_of_LEDs, and the first in next cycle has larger charge then the last one, accumulate from the last one
-                        self.flasherLevels[tel, neg_jump+1]=0
-                        for j in range(neg_jump+2, neg_jumps[i+1]+1):
-                            self.flasherLevels[tel, j]=j-neg_jump-1+self.flasherLevels[tel, neg_jump]
+                        #self.flasherLevels[tel, neg_jump+1]=0
+                        for j in range(neg_jump+1, neg_jumps[i+2]+1):
+                            self.flasherLevels[tel, j]=j-neg_jump-1
+                        flip_level = self.flasherLevels[tel, neg_jumps[i+1]+1]
+                        self.flasherLevels[tel, neg_jumps[i+1]] = flip_level
+                        self.flasherLevels[tel, neg_jumps[i+1]+1] = flip_level-1
+                    #case 3:
+                    elif i<len(neg_jumps)-3 and neg_jumps[i+2]-neg_jump < 16:
+                        n_sub_cycle=0
+                        for n_sub_cycle_ in [3,4,5,6]:
+                            if i<len(neg_jumps)-n_sub_cycle_ and neg_jumps[i+n_sub_cycle_]-neg_jump == 15+n_sub_cycle_:
+                                #and self.meanOfMedian[tel, neg_jump+1]<=5 \
+                                #and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10:
+                                n_sub_cycle=n_sub_cycle_
+                                break
+                        if n_sub_cycle ==0:
+                            #print(">>>")
+                            #treat as case 4
+                            #if neg_jump+1 is level 0, fill up to neg_jumps[i+1]
+                            for j in range(neg_jump+1, neg_jumps[i+1]+1):
+                                self.flasherLevels[tel, j]=j-neg_jump-1
+                            continue
+                        this_level_ = 1
+                        for k in range(n_sub_cycle):
+                            #set peds evts to 0 and continue regular flasher levels
+                            if self.flasherLevels[tel,neg_jumps[i+k]+1]<5:
+                                self.flasherLevels[tel,neg_jumps[i+k]+1]=0
+                            else:
+                                #something's wrong
+                                break
+                            for j in range(neg_jumps[i+k]+2, neg_jumps[i+k+1]+1):
+                                if self.flasherLevels[tel, j]>10:
+                                    self.flasherLevels[tel, j]=this_level_
+                                    this_level_+=1
+                                else:
+                                    break
+                            did_cycle.append(i+k)
+                    #case 4:
+                    elif self.meanOfMedian[tel, neg_jump+1]<=5:
+                        # neg_jump+1 is level 0, fill up to neg_jumps[i+1]
+                        for j in range(neg_jump+1, neg_jumps[i+1]+1):
+                            self.flasherLevels[tel, j]=j-neg_jump-1
                     else:
                         #print "A weird flasher cycle is not handled:"
                         for j in range(neg_jump+1, neg_jumps[i+1]+1):
@@ -701,7 +786,7 @@ class PyHiLo:
                             self.unhandledFlasherLevelsEvents[tel].append(j)
             print "There are "+str(len(self.unhandledFlasherLevelsEvents[tel]))+" events in tel "+str(tel)+" that we cannot determine the flasher levels, see self.unhandledFlasherLevelsEvents."
 
-    def getAllHiLoRatios(self, fitLoRange=[4,5,6,7], fitHiRange=[1,2,3], filebase=None,  fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False):
+    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], filebase=None,  fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False):
         fitLoRange_init=deepcopy(fitLoRange)
         fitHiRange_init=deepcopy(fitHiRange)
         for tel in [0,1,2,3]:
@@ -718,7 +803,7 @@ class PyHiLo:
                 self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, fitProfile=fitProfile, plot=plot, filebase=filebase, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo)
                 #self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, filebase=filebase, plot=True)
 
-    def plotFlasherLevelsHist(self, telID, number_of_LEDs=7):
+    def plotFlasherLevelsHist(self, telID, number_of_LEDs=15):
         fig, ax = plt.subplots(1)
         #if number_of_LEDs==7:
         #    colors=['r', 'b', 'g', 'm', 'c', 'brown', 'y', 'orange']
@@ -727,14 +812,14 @@ class PyHiLo:
                 'gray', 'plum', 'salmon', 'gold', 'teal', 'wheat']
         for i in range(number_of_LEDs+1):
             ax.hist(self.meanOfMedian[telID,:][np.where(self.flasherLevels[telID, :]==i)],
-                    bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color=colors[i], alpha=0.3, edgecolor='none')
+                    bins=200, range=[-10,np.max(self.meanOfMedian[telID,:])], color=colors[i], alpha=0.6, edgecolor='none')
         ax.hist(self.meanOfMedian[telID, self.unhandledFlasherLevelsEvents[telID]], bins=200,
-                range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.1, edgecolor='none', label="Unhandled")
+                range=[-10,np.max(self.meanOfMedian[telID,:])], color='k', alpha=0.3, edgecolor='none', label="Unhandled")
         plt.legend(loc='best')
         plt.show()
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
-                            fitLoRange=[4, 5, 6, 7], fitHiRange=[1,2,3], filebase=None, fitProfile=True,
+                            fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], filebase=None, fitProfile=True,
                             fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
@@ -1018,7 +1103,7 @@ def load_pickle(filename):
 
 def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
                    numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True,
-                   plotTrace=True, overwrite=False, number_of_LEDs=7):
+                   plotTrace=True, overwrite=False, number_of_LEDs=15):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo = load_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
@@ -1043,7 +1128,7 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
 def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
                         innerHiGain1=False, innerHiGain2=True, fitProfile=True,
                         numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, plotTrace=True,
-                        fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=7):
+                        fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=15):
     print "Processing run "+str(runnumber1)+"..."
     filedir = "hilo"+str(date)
     hilo1 = processHiLoRun(filename1, runnumber1, date, number_of_samples, innerHiGain=innerHiGain1, fitProfile=fitProfile,
