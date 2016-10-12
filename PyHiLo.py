@@ -717,6 +717,8 @@ class PyHiLo:
                     #                   if neg_jumps[i+n_sub_cycle]-neg_jump == 17
                     #                       and self.meanOfMedian[tel, neg_jump+1]<=5
                     #                       and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10: #the above isn't complete but ok
+                    # !!! note that a mix of 1 and 2 cannot be detected;
+                    #     also that situations at the beginning and the end of the run cannot be handeled
                     # in case 4, just start fresh at next level, and fill this level from 0
                     #       only fill when self.meanOfMedian[tel, neg_jump+1]<=5
                     #                       and self.meanOfMedian[tel, neg_jumps[i+1]+1]<=5:
@@ -743,11 +745,14 @@ class PyHiLo:
                         flip_level = self.flasherLevels[tel, neg_jumps[i+1]+1]
                         self.flasherLevels[tel, neg_jumps[i+1]] = flip_level
                         self.flasherLevels[tel, neg_jumps[i+1]+1] = flip_level-1
+                        did_cycle.append(i+1)
                     #case 3:
                     elif i<len(neg_jumps)-3 and neg_jumps[i+2]-neg_jump < 16:
                         n_sub_cycle=0
                         for n_sub_cycle_ in [3,4,5,6]:
-                            if i<len(neg_jumps)-n_sub_cycle_ and neg_jumps[i+n_sub_cycle_]-neg_jump == 15+n_sub_cycle_:
+                            #if i<len(neg_jumps)-n_sub_cycle_ and neg_jumps[i+n_sub_cycle_]-neg_jump == 15+n_sub_cycle_ \
+                            if i<len(neg_jumps)-n_sub_cycle_ and (neg_jumps[i+n_sub_cycle_]-neg_jump == 16 or neg_jumps[i+n_sub_cycle_]-neg_jump == 17) \
+                                    and neg_jumps[i+3]-neg_jumps[i+1] != 16 and neg_jumps[i+3]-neg_jumps[i+1] != 17:
                                 #and self.meanOfMedian[tel, neg_jump+1]<=5 \
                                 #and self.meanOfMedian[tel, neg_jumps[i+1]+1]>10:
                                 n_sub_cycle=n_sub_cycle_
