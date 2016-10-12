@@ -1121,7 +1121,7 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
     if not os.path.isdir(filedir+"/plots_"+str(number_of_samples)+"samples"):
         print "making directory "+filedir+"/plots_"+str(number_of_samples)+"samples"
         os.makedirs(filedir+'/plots_'+str(number_of_samples)+"samples")
-    hilo.getAllHiLoRatios(fitLoRange=[4,5,6,7], fitHiRange=[1,2,3], fitProfile=True, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, filebase=filedir+"/plots/hilo"+str(runnumber))
+    hilo.getAllHiLoRatios(fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], fitProfile=True, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, filebase=filedir+"/plots/hilo"+str(runnumber))
     hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
     hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
     if dump and not os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
