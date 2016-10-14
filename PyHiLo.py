@@ -869,7 +869,7 @@ class PyHiLo:
                             self.unhandledFlasherLevelsEvents[tel].append(j)
             print "There are "+str(len(self.unhandledFlasherLevelsEvents[tel]))+" events in tel "+str(tel)+" that we cannot determine the flasher levels, see self.unhandledFlasherLevelsEvents."
 
-    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,  fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False):
+    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,  fitProfile=True, numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False):
         fitLoRange_init=deepcopy(fitLoRange)
         fitHiRange_init=deepcopy(fitHiRange)
         for tel in [0,1,2,3]:
@@ -903,7 +903,7 @@ class PyHiLo:
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
                             fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None, fitProfile=True,
-                            fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False, save_debug=None):
+                            fmt='png', numberOfProfilesHi=50, numberOfProfilesLo=50, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
             self.calcMeanOfMedianHiLo()
@@ -927,6 +927,9 @@ class PyHiLo:
                     # skip if fewer than 80% of the events are in low gain mode:
                     #del fitLoRange_[i]
                     fitLoRange_.append(flasher_level_)
+                    if debug:
+                        print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i])),"high gain events"
+                        print("more than 70%% low gain, using flasher level %d for low-gain fit" % flasher_level_)
                 else:
                     print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i])),"high gain events"
                     print("less than 70%% low gain, skipping flasher level %d for low-gain fit" % flasher_level_)
@@ -977,6 +980,10 @@ class PyHiLo:
                     # skip if fewer than 80% of the events are in hi gain mode:
                     #del fitHiRange_[i]
                     fitHiRange_.append(flasher_level_)
+                    if debug:
+                        print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
+                            sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
+                        print("more than 70%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
                 else:
                     print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
                         sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
@@ -1031,7 +1038,7 @@ class PyHiLo:
                 ax.set_xlim(xlim)
             plt.legend(loc='best', prop={'size':11})
             if filebase is not None:
-                plt.savefig(filebase+"tel"+str(telID+1)+"chan"+str(chanID)+'.'+fmt, fmt=fmt)
+                plt.savefig(filebase+"tel"+str(telID+1)+"chan"+str(chanID)+'.'+fmt, fmt=fmt, dpi=300)
         #return ax, self.hilo_ratio[telID, chanID]
         if debug:
             print("Now debugging charges for tel %d channel %d..." % (telID, chanID))
@@ -1055,7 +1062,8 @@ class PyHiLo:
                 plt.legend(loc='best')
                 if save_debug is not None:
                     plt.savefig("lowGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"MonCharge.png")
-                plt.show()
+                #plt.show()
+                plt.draw()
 
                 print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][lowGainFitRange_j]))
                 fig, ax = plt.subplots(1)
@@ -1073,7 +1081,8 @@ class PyHiLo:
                 plt.legend(loc='best')
                 if save_debug is not None:
                     plt.savefig("lowGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"ChanCharge.png")
-                plt.show()
+                #plt.show()
+                plt.draw()
 
             print("Then high gain")
             for level_j_ in fitHiRange_:
@@ -1095,7 +1104,7 @@ class PyHiLo:
                 plt.legend(loc='best')
                 if save_debug is not None:
                     plt.savefig("highGainT"+str(telID+1)+"Chan"+str(chanID)+"FlasherLevel"+str(level_j_)+"_"+"MonCharge.png")
-                plt.show()
+                plt.draw()
 
                 print("Mean channel charge: %.2f" % np.mean(self.allCharge[telID][chanID][hiGainFitRange_j]))
                 fig, ax = plt.subplots(1)
@@ -1151,7 +1160,7 @@ class PyHiLo:
         if filebase is None:
             plt.show()
         else:
-            plt.savefig(filebase+"HiLoRatioHist.eps", fmt='eps')
+            plt.savefig(filebase+"HiLoRatioHist.png", dpi=300)
             self.dumpHiLoRatio(filebase=filebase+'HiLoRatios')
             self.multipliers_df = pd.DataFrame(np.zeros((1, 10)), 
                   columns=['date', 'run',  
@@ -1189,7 +1198,7 @@ def load_pickle(filename):
     return hilo
 
 def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
-                   numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True,
+                   numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, dump=True, read=True,
                    plotTrace=True, overwrite=False, number_of_LEDs=15, kmeans=True):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
@@ -1214,7 +1223,7 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
 
 def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
                         innerHiGain1=False, innerHiGain2=True, fitProfile=True,
-                        numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, plotTrace=True,
+                        numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, plotTrace=True,
                         fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=15):
     print "Processing run "+str(runnumber1)+"..."
     filedir = "hilo"+str(date)
@@ -1311,9 +1320,9 @@ def plotHiloMultipliersFromCSV(filebase="hilo2016-02-01/plots_80480_7samples_unn
         plt.show()
     else:
         if filebase2 is not None:
-            plt.savefig(filebase[:-2]+"AndNextRunCombined.eps", fmt='eps')
+            plt.savefig(filebase[:-2]+"AndNextRunCombined.png", dpi=300)
         else:
-            plt.savefig(filebase[:-2]+".eps", fmt='eps')
+            plt.savefig(filebase[:-2]+".png", dpi=300)
 
 def plotBothHilos(hilo1, hilo2, filebase=None, fit_norm=False, dump=True, date=None, runnumber=None, sample=None, xlo=4.5, xhi=7.5):
     fig, ax = plt.subplots(2,2, figsize=(12,9))
@@ -1344,7 +1353,7 @@ def plotBothHilos(hilo1, hilo2, filebase=None, fit_norm=False, dump=True, date=N
     if filebase is None:
         plt.show()
     else:
-        plt.savefig(filebase+"HiLoRatioHistCombined.eps", fmt='eps')
+        plt.savefig(filebase+"HiLoRatioHistCombined.png", dpi=300)
         #if dump:
         #    multipliers_df = pd.DataFrame(np.zeros((1, 11)),
         #                  columns=['date', 'run', 'sample', 
