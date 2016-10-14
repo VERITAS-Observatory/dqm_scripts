@@ -686,7 +686,7 @@ class PyHiLo:
             #clusters.append(new_clusters)
             self.flasherLevels[tel, :] = new_clusters
 
-    def getFlasherLevels(self, number_of_LEDs=15, kmeans=False):
+    def getFlasherLevels(self, number_of_LEDs=15, kmeans=True):
         if kmeans:
             self.getFlasherLevelsKMeans(number_of_LEDs=number_of_LEDs)
             return None
@@ -1186,14 +1186,14 @@ def load_pickle(filename):
 
 def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
                    numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False, dump=True, read=True,
-                   plotTrace=True, overwrite=False, number_of_LEDs=15):
+                   plotTrace=True, overwrite=False, number_of_LEDs=15, kmeans=True):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo = load_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
         return hilo
     hilo = PyHiLo(filename, innerHiGain, sample=number_of_samples)
     hilo.calcMeanOfMedianHiLo()
-    hilo.getFlasherLevels(number_of_LEDs=number_of_LEDs)
+    hilo.getFlasherLevels(number_of_LEDs=number_of_LEDs, kmeans=kmeans)
     if plotTrace:
         plotAverageTraces(filename, fileout=str(runnumber)+"_"+str(number_of_samples)+"AverageTraces.png")
     if not os.path.isdir(filedir+"/plots_"+str(number_of_samples)+"samples"):
