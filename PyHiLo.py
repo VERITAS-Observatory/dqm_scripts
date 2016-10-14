@@ -976,18 +976,21 @@ class PyHiLo:
             #fitHiRange_=deepcopy(fitHiRange)
             fitHiRange_=[]
             for i, flasher_level_ in enumerate(fitHiRange):
-                if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (2.33 * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
+                #if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (2.33 * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
+                if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (1.5 * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
                     # skip if fewer than 80% of the events are in hi gain mode:
                     #del fitHiRange_[i]
                     fitHiRange_.append(flasher_level_)
                     if debug:
                         print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
                             sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
-                        print("more than 70%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
+                        #print("more than 70%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
+                        print("more than 60%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
                 else:
                     print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
                         sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
-                    print("less than 70%% high gain, skipping flasher level %d for high-gain fit" % flasher_level_)
+                    #print("less than 70%% high gain, skipping flasher level %d for high-gain fit" % flasher_level_)
+                    print("less than 60%% high gain, skipping flasher level %d for high-gain fit" % flasher_level_)
             if len(fitHiRange_)<2:
                 print "Fewer than 2 flasher levels are occupied by >80% high gain events, can't fit only one point, quitting..."
                 return
