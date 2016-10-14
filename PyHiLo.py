@@ -869,7 +869,7 @@ class PyHiLo:
                             self.unhandledFlasherLevelsEvents[tel].append(j)
             print "There are "+str(len(self.unhandledFlasherLevelsEvents[tel]))+" events in tel "+str(tel)+" that we cannot determine the flasher levels, see self.unhandledFlasherLevelsEvents."
 
-    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], filebase=None,  fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False):
+    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,  fitProfile=True, numberOfProfilesHi=100, numberOfProfilesLo=100, plot=False):
         fitLoRange_init=deepcopy(fitLoRange)
         fitHiRange_init=deepcopy(fitHiRange)
         for tel in [0,1,2,3]:
@@ -902,7 +902,7 @@ class PyHiLo:
         plt.show()
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
-                            fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], filebase=None, fitProfile=True,
+                            fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None, fitProfile=True,
                             fmt='eps', numberOfProfilesHi=100, numberOfProfilesLo=100, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
@@ -1203,7 +1203,7 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
     if not os.path.isdir(filedir+"/plots_"+str(number_of_samples)+"samples"):
         print "making directory "+filedir+"/plots_"+str(number_of_samples)+"samples"
         os.makedirs(filedir+'/plots_'+str(number_of_samples)+"samples")
-    hilo.getAllHiLoRatios(fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6], fitProfile=True, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, filebase=filedir+"/plots/hilo"+str(runnumber))
+    hilo.getAllHiLoRatios(fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], fitProfile=True, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, filebase=filedir+"/plots/hilo"+str(runnumber))
     hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
     hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
     if dump and not os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
