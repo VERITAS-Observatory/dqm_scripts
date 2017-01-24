@@ -1134,7 +1134,7 @@ class PyHiLo:
         for tel in [0,1,2,3]:
             pd.DataFrame(self.hilo_ratio[tel,self.testChanStart:self.testChanEnd+1]).to_csv(filebase+'_T'+str(tel+1)+'.csv', index=False, header=False)
 
-    def plotHiLoRatio(self, filebase=None, fit_norm=False, date=None, runnumber=None):
+    def plotHiLoRatio(self, filebase=None, fit_norm=False, date=None, runnumber=None, xlo=4.5, xhi=7.5):
         fig, ax = plt.subplots(2,2, figsize=(12,9))
         r_ = np.zeros(4)
         dr_ = np.zeros(4)
@@ -1159,6 +1159,7 @@ class PyHiLo:
                 dr_[telID]=sigma_fit
             ax.flatten()[telID].legend(loc='best')
             ax.flatten()[telID].set_xlabel("Hi/Lo ratio")
+            ax.flatten()[telID].set_xlim(xlo, xhi)
         plt.tight_layout()
         if filebase is None:
             plt.show()
