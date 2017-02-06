@@ -661,6 +661,21 @@ class PyHiLo:
         else:
             return self.allCharge, self.hiLo
 
+    def filter_saturated_flasher_levels(self, number_of_LEDs=15):
+        # if the brightest few flasher levels are saturated, mark them
+        if not hasattr(self, 'flasherLevels'):
+            print "You haven't run getFlasherLevelsKMeans or getFlasherLevels yet... Giving up!"
+            return
+        self.saturatedFlasherLevels= [[] for i in range(4)]
+        # assume the first 8 flasher levels have no monitor saturation issues
+        # if mean saturation fraction is > 9% dont use for fit
+        sat_thresh = 0.09
+        for telID in range(4):
+            for flasherL in range(8, number_of_LEDs+1):
+                if np.mean(sum(self.hiLo[telID][self.MonChanStart:self.MonChanEnd + 1].take(np.where(self.flasherLevels[telID,:] == flasherL)[0], axis = 1)==1)\
+                        *1.0/sum(self.hiLo[telID][self.MonChanStart:self.MonChanEnd + 1].take(np.where(self.flasherLevels[telID,:] == flasherL)[0], axis = 1)==0)) \
+                        > sat_thresh:
+                    self.saturatedFlasherLevels[telID].append(flasherL)
 
     def getFlasherLevelsKMeans(self, number_of_LEDs=15):
         #kmeans = []
@@ -921,6 +936,9 @@ class PyHiLo:
             #fitLoRange_ = deepcopy(fitLoRange)
             fitLoRange_ = []
             for i, flasher_level_ in enumerate(fitLoRange):
+                if flasher_level_ in self.saturatedFlasherLevels[telID]:
+                    print("The flasher level #{0:d} in tel {1} is saturated, not fitting this level".format(flasher_level_, telID))
+                    continue
                 if sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])) >= (2.3 * sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i]))):
                     #print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange_[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange_[i])),"high gain events"
                     #print "less than 80% low gain, skipping"
