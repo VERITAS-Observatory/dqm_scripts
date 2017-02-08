@@ -922,6 +922,8 @@ class PyHiLo:
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
             self.calcMeanOfMedianHiLo()
+        if not hasattr(self, 'saturatedFlasherLevels'):
+            self.filter_saturated_flasher_levels()
         assert telID>=0 and telID<=3, "Input telID should be 0-3"
         print "Getting monitor vs channel charge for tel",telID, "chan", chanID
         if ax is None and plot:
