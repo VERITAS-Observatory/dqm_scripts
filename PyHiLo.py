@@ -1221,7 +1221,7 @@ def load_pickle(filename):
 
 def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=True, fitProfile=True,
                    numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, dump=True, read=True,
-                   plotTrace=True, overwrite=False, number_of_LEDs=15, kmeans=True):
+                   plotTrace=False, overwrite=False, number_of_LEDs=15, kmeans=True):
     filedir = 'hilo'+str(date)
     if read and os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo = load_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
@@ -1245,7 +1245,7 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
 
 def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
                         innerHiGain1=False, innerHiGain2=True, fitProfile=True,
-                        numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, plotTrace=True,
+                        numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, plotTrace=False,
                         fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=15):
     print "Processing run "+str(runnumber1)+"..."
     filedir = "hilo"+str(date)
