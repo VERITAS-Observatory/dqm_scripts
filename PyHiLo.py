@@ -916,7 +916,7 @@ class PyHiLo:
         #plt.legend(loc='best')
         plt.show()
 
-    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5,
+    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5, fit_cut_frac = 0.6,
                             fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None, fitProfile=True,
                             fmt='png', numberOfProfilesHi=50, numberOfProfilesLo=50, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
@@ -941,7 +941,7 @@ class PyHiLo:
                 if flasher_level_ in self.saturatedFlasherLevels[telID]:
                     print("The flasher level #{0:d} in tel {1} is saturated, not fitting this level".format(flasher_level_, telID))
                     continue
-                if sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])) >= (2.3 * sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i]))):
+                if sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])) >= (fit_cut_frac *1.0/(1.-fit_cut_frac) * sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i]))):
                     #print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange_[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange_[i])),"high gain events"
                     #print "less than 80% low gain, skipping"
                     # skip if fewer than 80% of the events are in low gain mode:
@@ -949,13 +949,13 @@ class PyHiLo:
                     fitLoRange_.append(flasher_level_)
                     if debug:
                         print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i])),"high gain events"
-                        print("more than 70%% low gain, using flasher level %d for low-gain fit" % flasher_level_)
+                        print("more than {:d}% low gain, using flasher level {:d} for low-gain fit".format(fit_cut_frac*100, flasher_level_))
                 else:
                     print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitLoRange[i])),"low gain events", sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitLoRange[i])),"high gain events"
-                    print("less than 70%% low gain, skipping flasher level %d for low-gain fit" % flasher_level_)
+                    print("less than {:d}% low gain, skipping flasher level {:d} for low-gain fit".format(fit_cut_frac*100, flasher_level_))
             if len(fitLoRange_)<2:
                 print fitLoRange_
-                print("Fewer than 2 flasher levels are occupied by >75% low gain events, can't fit only one point, quitting...")
+                print("Fewer than 2 flasher levels are occupied by enough low gain events, can't fit only one point, quitting...")
                 return
             #print "Low gain flasher levels to fit are:", fitLoRange_
             lowGainFitRange=np.where((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] <= fitLoRange_[-1]) & (self.flasherLevels[telID, :] >= fitLoRange_[0]))
@@ -997,7 +997,7 @@ class PyHiLo:
             fitHiRange_=[]
             for i, flasher_level_ in enumerate(fitHiRange):
                 #if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (2.33 * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
-                if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (1.5 * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
+                if sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])) >= (fit_cut_frac *1.0/(1.-fit_cut_frac) * sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i]))):
                     # skip if fewer than 80% of the events are in hi gain mode:
                     #del fitHiRange_[i]
                     fitHiRange_.append(flasher_level_)
@@ -1005,14 +1005,14 @@ class PyHiLo:
                         print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
                             sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
                         #print("more than 70%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
-                        print("more than 60%% high gain, using flasher level %d for high-gain fit" % flasher_level_)
+                        print("more than {:d}% high gain, using flasher level {:d} for high-gain fit".format(fit_cut_frac*100, flasher_level_))
                 else:
                     print "there are",sum((self.hiLo[telID][chanID][:]==1) & (self.flasherLevels[telID, :] == fitHiRange[i])),"low gain events",\
                         sum((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] == fitHiRange[i])),"high gain events"
                     #print("less than 70%% high gain, skipping flasher level %d for high-gain fit" % flasher_level_)
-                    print("less than 60%% high gain, skipping flasher level %d for high-gain fit" % flasher_level_)
+                    print("less than {:d}% high gain, skipping flasher level {:d} for high-gain fit".format(fit_cut_frac*100, flasher_level_))
             if len(fitHiRange_)<2:
-                print "Fewer than 2 flasher levels are occupied by >80% high gain events, can't fit only one point, quitting..."
+                print "Fewer than 2 flasher levels are occupied by enough high gain events, can't fit only one point, quitting..."
                 return
             #print "High gain flasher levels to fit are:", fitHiRange_
             hiGainFitRange=np.where((self.hiLo[telID][chanID][:]==0) & (self.flasherLevels[telID, :] <= fitHiRange_[-1]) & (self.flasherLevels[telID, :] >= fitHiRange_[0]))
