@@ -1241,8 +1241,11 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
         hilo.dump_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
     elif dump and overwrite:
         hilo.dump_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
-    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
-    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
+    try:
+        hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
+        hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
+    except:
+        print("Can't plot")
     return hilo
 
 def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
@@ -1258,9 +1261,9 @@ def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, numb
     hilo2 = processHiLoRun(filename2, runnumber2, date, number_of_samples, innerHiGain=innerHiGain2, fitProfile=fitProfile,
                            numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
                            plot=plot, plotTrace=plotTrace, overwrite=True, number_of_LEDs=number_of_LEDs)
-    plotBothHilos(hilo1, hilo2, filebase=str(runnumber1)+'_'+str(runnumber2)+'_'+str(number_of_samples)+"samples", fit_norm=fit_norm, xlo=xlo, xhi=xhi)
     getMultipliers(hilo1, filebase="hilo_multipliers/"+str(date)+"_"+str(runnumber1)+"_"+str(number_of_samples)+"sample", fit_norm=fit_norm, date=date, runnumber=runnumber1, sample=number_of_samples)
     getMultipliers(hilo2, filebase="hilo_multipliers/"+str(date)+"_"+str(runnumber2)+"_"+str(number_of_samples)+"sample", fit_norm=fit_norm, date=date, runnumber=runnumber2, sample=number_of_samples)
+    plotBothHilos(hilo1, hilo2, filebase=str(runnumber1)+'_'+str(runnumber2)+'_'+str(number_of_samples)+"samples", fit_norm=fit_norm, xlo=xlo, xhi=xhi)
     return hilo1, hilo2
 
 def getManyMultipliers(hilo_pickles, dates, runnumbers, samples, fit_norm=False):
