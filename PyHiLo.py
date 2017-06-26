@@ -1234,27 +1234,27 @@ def processHiLoRun(filename, runnumber, date, number_of_samples, innerHiGain=Tru
     if plotTrace:
         plotAverageTraces(filename, fileout=str(runnumber)+"_"+str(number_of_samples)+"AverageTraces.png")
     if not os.path.isdir(filedir+"/plots_"+str(number_of_samples)+"samples"):
-        print "making directory "+filedir+"/plots_"+str(number_of_samples)+"samples"
+        print("making directory "+filedir+"/plots_"+str(number_of_samples)+"samples")
         os.makedirs(filedir+'/plots_'+str(number_of_samples)+"samples")
     hilo.getAllHiLoRatios(fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], fitProfile=True, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo, plot=plot, filebase=filedir+"/plots/hilo"+str(runnumber))
-    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
-    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
     if dump and not os.path.exists("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl"):
         hilo.dump_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
     elif dump and overwrite:
         hilo.dump_pickle("hilo"+str(runnumber)+"_"+str(number_of_samples)+"samples.pkl")
+    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"unnormed_", date=date, runnumber=runnumber)
+    hilo.plotHiLoRatio(filebase=filedir+'/plots_'+str(runnumber)+"_"+str(number_of_samples)+"samples_"+"normed_", fit_norm=True, date=date, runnumber=runnumber)
     return hilo
 
 def processBothHiLoRuns(filename1, filename2, runnumber1, runnumber2, date, number_of_samples,
                         innerHiGain1=False, innerHiGain2=True, fitProfile=True,
                         numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False, plotTrace=False,
                         fit_norm=True, xlo=4.5, xhi=7.5, number_of_LEDs=15):
-    print "Processing run "+str(runnumber1)+"..."
+    print("Processing run "+str(runnumber1)+"...")
     filedir = "hilo"+str(date)
     hilo1 = processHiLoRun(filename1, runnumber1, date, number_of_samples, innerHiGain=innerHiGain1, fitProfile=fitProfile,
                            numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
                            plot=plot, plotTrace=plotTrace, overwrite=True, number_of_LEDs=number_of_LEDs)
-    print "Processing run "+str(runnumber2)+"..."
+    print("Processing run "+str(runnumber2)+"...")
     hilo2 = processHiLoRun(filename2, runnumber2, date, number_of_samples, innerHiGain=innerHiGain2, fitProfile=fitProfile,
                            numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
                            plot=plot, plotTrace=plotTrace, overwrite=True, number_of_LEDs=number_of_LEDs)
