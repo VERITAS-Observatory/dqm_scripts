@@ -884,7 +884,8 @@ class PyHiLo:
                             self.unhandledFlasherLevelsEvents[tel].append(j)
             print "There are "+str(len(self.unhandledFlasherLevelsEvents[tel]))+" events in tel "+str(tel)+" that we cannot determine the flasher levels, see self.unhandledFlasherLevelsEvents."
 
-    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,  fitProfile=True, numberOfProfilesHi=50, numberOfProfilesLo=50, plot=False):
+    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,
+                         fitProfile=True, numberOfProfilesHi=50, numberOfProfilesLo=50, fit_cut_frac = 0.4, plot=False):
         fitLoRange_init=deepcopy(fitLoRange)
         fitHiRange_init=deepcopy(fitHiRange)
         for tel in [0,1,2,3]:
@@ -898,7 +899,10 @@ class PyHiLo:
                 fitHiRange = fitHiRange_init
                 #print "Initial low gain levels to fit:", fitLoRange
                 #print "Initial high gain levels to fit:", fitHiRange
-                self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, fitProfile=fitProfile, plot=plot, filebase=filebase, numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo)
+                self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange,
+                                         fitProfile=fitProfile, plot=plot, filebase=filebase,
+                                         numberOfProfilesHi=numberOfProfilesHi, numberOfProfilesLo=numberOfProfilesLo,
+                                         fit_cut_frac=fit_cut_frac)
                 #self.getMonitorVsChannel(telID=tel, chanID=chan, fitLoRange=fitLoRange, fitHiRange=fitHiRange, filebase=filebase, plot=True)
 
     def plotFlasherLevelsHist(self, telID, number_of_LEDs=15):
@@ -916,7 +920,7 @@ class PyHiLo:
         #plt.legend(loc='best')
         plt.show()
 
-    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5, fit_cut_frac = 0.6,
+    def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5, fit_cut_frac = 0.4,
                             fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None, fitProfile=True,
                             fmt='png', numberOfProfilesHi=50, numberOfProfilesLo=50, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
