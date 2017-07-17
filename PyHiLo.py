@@ -884,7 +884,7 @@ class PyHiLo:
                             self.unhandledFlasherLevelsEvents[tel].append(j)
             print "There are "+str(len(self.unhandledFlasherLevelsEvents[tel]))+" events in tel "+str(tel)+" that we cannot determine the flasher levels, see self.unhandledFlasherLevelsEvents."
 
-    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None,
+    def getAllHiLoRatios(self, fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7,8,9,10], filebase=None,
                          fitProfile=True, numberOfProfilesHi=50, numberOfProfilesLo=50, fit_cut_frac = 0.4, plot=False):
         fitLoRange_init=deepcopy(fitLoRange)
         fitHiRange_init=deepcopy(fitHiRange)
@@ -921,7 +921,7 @@ class PyHiLo:
         plt.show()
 
     def getMonitorVsChannel(self, telID=0, chanID=0, plot=False, ax=None, xlim=None, ylim=None, markersize=0.5, fit_cut_frac = 0.4,
-                            fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7], filebase=None, fitProfile=True,
+                            fitLoRange=[6,7,8,9,10,11,12,13,14,15], fitHiRange=[1,2,3,4,5,6,7,8,9,10], filebase=None, fitProfile=True,
                             fmt='png', numberOfProfilesHi=50, numberOfProfilesLo=50, debug=False, save_debug=None):
         if not hasattr(self, 'meanOfMedian'):
             print "You haven't run calcMeanOfMedianHiLo yet..."
