@@ -18,7 +18,10 @@ from copy import deepcopy
 from mpl_toolkits.axes_grid1 import Grid
 from sklearn import cluster
 
-ROOT.gSystem.Load("$VEGAS/common/lib/libSP24sharedLite.so")
+#before v255
+#ROOT.gSystem.Load("$VEGAS/common/lib/libSP24sharedLite.so")
+#after v255
+ROOT.gSystem.Load("$VEGAS/lib/libVEGAScommon.so")
 
 def lin_func(x, a, b):
     return x*a+b
@@ -90,8 +93,12 @@ class PyHiLo:
 
         if maskL2:
             #hard-coded for speed, all numbers are CHANNEL IDs
-            l2channels=[[110, 249, 255, 404, 475, 499], [128, 173, 259, 498, 499],
-                        [37, 159, 319, 451, 499], [99, 214, 333, 499]]
+            #l2channels=[[110, 249, 255, 404, 475, 499], [128, 173, 259, 498, 499],
+            #            [37, 159, 319, 451, 499], [99, 214, 333, 499]]
+            #after 2016-06-23:
+            l2channels=[[50, 232, 357, 448], [21, 173, 259, 499], 
+                        [80, 190, 319, 499], [7, 214, 377, 499]]
+
             neighbor_dict = {0: [1, 2, 3, 4, 5, 6],
                      1: [0, 2, 6, 7, 8, 18],
                      2: [0, 1, 3, 8, 9, 10],
@@ -611,9 +618,9 @@ class PyHiLo:
                 raise
             #evtNum.append(int(calibEvtData.fArrayEventNum))
             try:
-                snrStorage = np.zeros(500)
+                #snrStorage = np.zeros(500)
                 for telID in range(4):
-                    snrStorage.fill(0.0)
+                    #snrStorage.fill(0.0)
                     brd_candidate_index = np.array([],dtype=int)
                     fChanData = calibEvtData.fTelEvents.at(telID).fChanData
                     fChanData_iter = ( fChanData.at(i) for i in range(fChanData.size()) )
@@ -621,25 +628,25 @@ class PyHiLo:
                     for CD in fChanData_iter :
                         chanID = CD.fChanID
                         #charge = CD.fCharge
-                        SNR    = CD.fSignalToNoise
+                        #SNR    = CD.fSignalToNoise
                         self.allCharge[telID][chanID][evt_count] = CD.fCharge
                         self.hiLo[telID][chanID][evt] = CD.fHiLo
-                        snrStorage[chanID] = SNR
-                        if cleaning is not None:
-                            if SNR < cleaning['brd']:
-                                self.allCharge[telID][chanID][evt_count] = 0
-                            elif SNR < cleaning['img']:
-                                brd_candidate_index = np.append(brd_candidate_index,chanID)
-                        if cleaning is not None:
+                        #snrStorage[chanID] = SNR
+                        #if cleaning is not None:
+                        #    if SNR < cleaning['brd']:
+                        #        self.allCharge[telID][chanID][evt_count] = 0
+                        #    elif SNR < cleaning['img']:
+                        #        brd_candidate_index = np.append(brd_candidate_index,chanID)
+                        #if cleaning is not None:
                             #print("Cleaning the images...")
-                            for chanID in brd_candidate_index:
-                                passed  = False
-                                for neighbor in neighbor_dict[chanID]:
-                                    if snrStorage[neighbor] > cleaning['img']:
-                                        passed = True
-                                        break
-                                if not passed:
-                                    self.allCharge[telID][chanID][evt_count] = 0
+                        #    for chanID in brd_candidate_index:
+                        #        passed  = False
+                        #        for neighbor in neighbor_dict[chanID]:
+                        #            if snrStorage[neighbor] > cleaning['img']:
+                        #                passed = True
+                        #                break
+                        #        if not passed:
+                        #            self.allCharge[telID][chanID][evt_count] = 0
 
                         #if pedestal_subtraction:
                         #    #seems already done in VEGAS
