@@ -14,5 +14,5 @@ hilo.getAllCharge()
 hilo.calcMeanOfMedianHiLo()
 
 
-pickle.dump(hilo,picklename)
-
+with open(picklename,'wb') as picklefile:
+    pickle.dump(hilo,picklefile)
